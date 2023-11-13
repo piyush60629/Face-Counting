@@ -1,11 +1,18 @@
 from flask import Flask, render_template, Response
 import cv2
 import json
+import os  # Import the os module
+import atexit
 
 app = Flask(__name__)
 
-cap = cv2.VideoCapture(0)
-faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+# Get camera index from environment variable, default to 0
+camera_index = int(os.environ.get('CAMERA_INDEX', 0))
+cap = cv2.VideoCapture(camera_index)
+
+# Use relative path for the cascade classifier XML file
+cascade_path = "haarcascade_frontalface_default.xml"
+faceCascade = cv2.CascadeClassifier(cascade_path)
 
 def generate_frames():
     while True:
@@ -32,6 +39,13 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
         yield f"data: {json.dumps({'count': count})}\n\n"
+
+# Explicitly release video capture resources on application exit
+def release_resources():
+    cap.release()
+
+# Register the release_resources function to be called on application exit
+atexit.register(release_resources)
 
 @app.route('/')
 def index():
