@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Video Face Detection</h1>
+    <p>Number of Persons Detected: <span id="person-count">0</span></p>
+    <img src="{{ url_for('video_feed') }}" alt="Face Detection">
+    <script>
+        const personCountElement = document.getElementById('person-count');
+        const source = new EventSource("/update_count");
+
+        source.onmessage = function (event) {
+            const count = JSON.parse(event.data).count;
+            personCountElement.textContent = count;
+        };
+    </script>
+</body>
+</html>
