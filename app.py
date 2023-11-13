@@ -1,40 +1,49 @@
+from flask import Flask, render_template, Response
 import cv2
+import json
 
-# Get a reference to webcam
+app = Flask(__name__)
+
 cap = cv2.VideoCapture(0)
-
-# Create the haar cascade
 faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
-while True:
+def generate_frames():
+    while True:
+        ret, frame = cap.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    ret, frame = cap.read(0)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(30, 30),
+            flags=cv2.CASCADE_SCALE_IMAGE
+        )
 
-    # Detect faces in the image
-    faces = faceCascade.detectMultiScale(
-      gray,
-      scaleFactor=1.1,
-      minNeighbors=5,
-      minSize=(30, 30),
-      flags = cv2.CASCADE_SCALE_IMAGE
-    )
+        count = len(faces)
 
-    count=0
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-    # Draw a rectangle around the faces
-    for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        count+=1
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
 
-    # Display count
-    cv2.putText(frame, str(count), (70, 45), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-    cv2.imshow('Video Face Detection', frame)
+        yield f"data: {json.dumps({'count': count})}\n\n"
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-# When everything is done, release the capture
-cap.release()
-cv2.destroyAllWindows()
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/update_count')
+def update_count():
+    return Response(generate_frames(), content_type='text/event-stream')
+
+if __name__ == '__main__':
+    app.run(debug=True)
