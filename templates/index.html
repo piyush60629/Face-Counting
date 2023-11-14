@@ -3,21 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Detection</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>Camera Stream</title>
 </head>
 <body>
-    <h1>Video Face Detection</h1>
-    <p>Number of Persons Detected: <span id="person-count">0</span></p>
-    <img src="{{ url_for('video_feed') }}" alt="Face Detection">
+    <h1>Camera Stream</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <p id="faceCount">Number of People Detected: 0</p>
     <script>
-        const personCountElement = document.getElementById('person-count');
-        const source = new EventSource("/update_count");
+        var video = document.getElementById('video');
+        var faceCountElement = document.getElementById('faceCount');
 
-        source.onmessage = function (event) {
-            const count = JSON.parse(event.data).count;
-            personCountElement.textContent = count;
-        };
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+
+                var eventSource = new EventSource('/video_feed');
+                eventSource.onmessage = function (event) {
+                    var data = JSON.parse(event.data);
+                    faceCountElement.innerHTML = 'Number of People Detected: ' + data.count;
+                };
+            })
+            .catch(function (err) {
+                console.error('Error accessing the camera: ', err);
+            });
     </script>
 </body>
 </html>
