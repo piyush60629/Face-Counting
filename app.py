@@ -59,5 +59,5 @@ def video_feed():
 def update_count():
     return Response(generate_frames(), content_type='text/event-stream')
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(port=8000,debug=True) # running the app on the local machine on port 8000
