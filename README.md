@@ -28,6 +28,6 @@ Run the script:
   
 ## Project Structure
 
-**face_count.py:** Main Python script for face counting with OpenCV.
-**haarcascade_frontalface_default.xml:** Haar cascade classifier file for face detection.
+- **face_count.py:** Main Python script for face counting with OpenCV.
+- **haarcascade_frontalface_default.xml:** Haar cascade classifier file for face detection.
 
